@@ -3,6 +3,7 @@ package repl
 import (
 	"testing"
 	"reflect"
+	_"strings"
 )
 
 /*If we want to dig in to the coverage report the go tool has several options to print the coverage report. We can use go tool cover -func to break down the coverage per function:
@@ -10,7 +11,6 @@ import (
 % go tool cover -func=c.out
 split/split.go:8:       Split          100.0%
 total:                  (statements)   100.0% */
-
 
 func TestCleanInput(t *testing.T) {
     

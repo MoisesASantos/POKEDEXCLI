@@ -1,3 +1,3 @@
-module pokedexcli
+module github.com/MoisesASantos/POKEDEXCLI
 
-go 1.26.2
+go 1.22
