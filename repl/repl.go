@@ -4,6 +4,6 @@ import (
 	"strings"
 )
 
-func cleanInput(text string) []string {
+func CleanInput(text string) []string {
 	return strings.Fields(text)
 }
