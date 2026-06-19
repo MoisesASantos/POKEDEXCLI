@@ -11,6 +11,7 @@ type cacheEntry struct {
 
 type cache struct {
 	map_result map[string]cacheEntry
+	my_mutex	*sync.Mutex
 }
 
 func (r cache) Add(key_intro string, data []byte) {
@@ -23,6 +24,16 @@ func (r cache) Add(key_intro string, data []byte) {
 }
 
 func (r cache) Get(key_intro string) ([]byte, bool) {
+  
+	result, exits = r.map_result[key_intro]
+
+	if exists != nil {
+		return nil, false
+	}
+	return result.val, true
+}
+
+func (r cache) reapLoop(key_intro string) ([]byte, bool) {
   
 	result, exits = r.map_result[key_intro]
 
