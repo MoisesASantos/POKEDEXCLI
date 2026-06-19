@@ -11,6 +11,8 @@ type cacheEntry struct {
 
 func (r cacheEntry) Add() int {
   r.createdAt = 
+  r.val = 
+  return 0
 }
 
 timeResult := map[string]cacheEntry
