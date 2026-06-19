@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 	"time"
-
+	"pokecache"
 	"github.com/MoisesASantos/POKEDEXCLI/repl"
 )
 
@@ -63,6 +63,10 @@ func makeRequest(url string, cfg *config) error {
 	}
 	defer res.Body.Close()
 
+	if res.StatusCode > 299 {
+		fmt.Printf("Error code: %d\n", res.StatusCode)
+		return nil
+	}
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
