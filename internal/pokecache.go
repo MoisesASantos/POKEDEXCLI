@@ -14,12 +14,21 @@ type cache struct {
 }
 
 func (r cache) Add(key_intro string, data []byte) {
-  map_to_add = r.map_result[key_intro]
-  map_to_add.createdAt = time.Now()
-  map_to_add.val = data
+
+	var entry_to_Add cacheEntry
+
+	entry_to_add.createdAt = time.Now() 
+	entry_to_add.val = data 
+  	r.map_result[key_intro] = entry_to_add
 }
 
-func (r cache) Get(key_intro string) cacheEntry {
-  result = r.map_result[key_intro]
+func (r cache) Get(key_intro string) ([]byte, bool) {
+  
+	result, exits = r.map_result[key_intro]
+
+	if exists != nil {
+		return nil, false
+	}
+	return result.val, true
 }
 
