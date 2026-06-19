@@ -9,10 +9,17 @@ type cacheEntry struct {
 	val 		[]byte
 }
 
-func (r cacheEntry) Add() int {
-  r.createdAt = 
-  r.val = 
-  return 0
+type cache struct {
+	map_result map[string]cacheEntry
 }
 
-timeResult := map[string]cacheEntry
+func (r cache) Add(key_intro string, data []byte) {
+  map_to_add = r.map_result[key_intro]
+  map_to_add.createdAt = time.Now()
+  map_to_add.val = data
+}
+
+func (r cache) Get(key_intro string) cacheEntry {
+  result = r.map_result[key_intro]
+}
+
