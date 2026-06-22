@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 	"github.com/MoisesASantos/POKEDEXCLI/repl"
-	"github.com/MoisesASantos/POKEDEXCLI/pokecache"
+	"github.com/MoisesASantos/POKEDEXCLI/internal"
 )
 
 type LocationArea struct {
