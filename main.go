@@ -31,12 +31,17 @@ type cliCommand struct {
 	callback    func(*config) error
 }
 
-var CacheStorage *cache
+type CacheInterface interface {
+	Add(key_intro string, data []byte)
+	Get(key string) ([]byte, bool)
+}
+
+var CacheStorage CacheInterface
 
 
 func commandHelp(cfg *config) error {
 	fmt.Println("Welcome to the Pokedex!")
-	fmt.Println("Usage:\n")
+	fmt.Println("Usage:")
 	fmt.Println("help: Displays a help message")
 	fmt.Println("exit: Exit the Pokedex")
 	fmt.Println("map: Display the next 20 location areas")
@@ -52,7 +57,7 @@ func commandExit(cfg *config) error {
 
 func makeRequest(url string, cfg *config) error {
 
-	if bytesGuardados, existe := CacheStorage.Get(url); existe {
+	if bytesGuardados, ok := CacheStorage.Get(url); ok {
 		err := json.Unmarshal(bytesGuardados, cfg)
 		if err != nil {
 			return err
@@ -109,7 +114,7 @@ func commandMap(cfg *config) error {
 	}
 
 	return makeRequest(
-		"https://pokeapi.co/api/v2/location-area/",
+		"https://pokeapi.co/api/v2/location-area",
 		cfg,
 	)
 }
@@ -126,8 +131,8 @@ func commandMapb(cfg *config) error {
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
-	const baseTime = 5 * time.Millisecond
-	CacheStorage = NewCache(baseTime)
+	const baseTime = 300000 * time.Millisecond
+	CacheStorage = pokecache.NewCache(baseTime)
 	cfg := &config{}
 
 	commands := map[string]cliCommand{

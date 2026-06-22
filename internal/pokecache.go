@@ -1,4 +1,4 @@
-package internal
+package pokecache
 
 import (
 	"time"
@@ -15,7 +15,7 @@ type cache struct {
 	my_mutex	*sync.Mutex
 }
 
-func (r cache) Add(key_intro string, data []byte) {
+func (r *cache) Add(key_intro string, data []byte) {
 
 	r.my_mutex.Lock()
 	defer r.my_mutex.Unlock()
@@ -26,12 +26,11 @@ func (r cache) Add(key_intro string, data []byte) {
 	var entry_to_add cacheEntry
 
 	entry_to_add.createdAt = time.Now() 
-	entry_to_add.val = data 
+	entry_to_add.val = data
   	r.map_result[key_intro] = entry_to_add
 }
 
-func (r cache) Get(key_intro string) ([]byte, bool) {
-  
+func (r *cache) Get(key_intro string) ([]byte, bool) {
 	r.my_mutex.Lock()
 	defer r.my_mutex.Unlock()
 
@@ -40,7 +39,8 @@ func (r cache) Get(key_intro string) ([]byte, bool) {
 }
 
 
-func (r cache) remove_item(interval time.Duration) {
+
+func (r *cache) remove_item(interval time.Duration) {
 
 	r.my_mutex.Lock()
 	defer r.my_mutex.Unlock()
@@ -53,7 +53,7 @@ func (r cache) remove_item(interval time.Duration) {
 	}
 }
 
-func (r cache) reapLoop(interval time.Duration) {
+func (r *cache) reapLoop(interval time.Duration) {
   
 	//cria um ticker a cada intervalo de tempo, o ticker tem um canal que é enviado um sinal por uma go routine interna cada vez que passa o intervalo de tempo difinido, por cada elemento ou sinal no canal do ticker significa um aviso que passou o intervalo de tempo, sendo assim entra em remove_item, bloquea o map_result de ser acessado por outras go routine, as outras go routine ficam em espera, para ler e alterar o mapa, é calculado o limete de tempo pelo qual o cache se tornou antigo, subtraindo o intervalo do nosso tempo atual, depois fizemos um loop em map_result e o que tiver sido criado antes desse limite é iliminado
 	ticker := time.NewTicker(interval)
