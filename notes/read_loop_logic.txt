@@ -1,0 +1,25 @@
+Compreendeu perfeitamente a lógica do cálculo do tempo! É exatamente esse o raciocínio: a hora atual menos 5 segundos define o limite do que é considerado "antigo".
+Sobre a sua dúvida sobre o bloqueio e o comportamento do ticker, a resposta direta é: Não, o ticker não para. Ele continua a funcionar em segundo plano.
+Aqui está a explicação detalhada de como as goroutines e o mutex se comportam nesse cenário:
+## 1. O Ticker para quando o Mutex bloqueia?
+Não. O time.Ticker é gerido diretamente pelo runtime do Go e funciona de forma independente.
+
+* Ele continuará a enviar um sinal para o canal ticker.C a cada 5 segundos, independentemente de a sua goroutine reapLoop estar bloqueada pelo mutex ou não.
+* Se a limpeza demorar muito tempo e o mutex ficar trancado, os sinais do ticker acumulam-se no canal (até ao limite do buffer do canal, que para tickers é de 1 sinal).
+
+## 2. Quem fica bloqueado quando o Mutex tranca?
+Quando o método reap faz r.my_mutex.Lock(), a goroutine reapLoop passa a ter o controlo exclusivo do mapa.
+Se outra goroutine tentar aceder à cache ao mesmo tempo (por exemplo, a goroutine principal a tentar ler dados através de um método Get ou a adicionar através de Add), essa outra goroutine fica suspensa (em espera) na linha do .Lock() dela. Ela não consome CPU, fica apenas a aguardar que a reapLoop faça o Unlock().
+## O Fluxo Exato do que Acontece:
+
+   1. O Ticker dispara: Passaram 5 segundos. O loop for range ticker.C recebe o sinal e chama r.reap(interval).
+   2. Tranca o Mutex: A goroutine reapLoop executa r.my_mutex.Lock(). O mapa está agora protegido.
+   3. Limpeza: O programa entra no loop, compara as datas com o limite e elimina os itens antigos através do delete().
+   4. Destranca o Mutex: A função reap termina e o defer r.my_mutex.Unlock() é executado automaticamente.
+   5. Aguardar: A goroutine reapLoop volta para a linha do for range ticker.C e fica a dormir, sem gastar recursos, até passarem os próximos 5 segundos.
+
+## Uma Pequena Correção no Nome
+No seu texto mencionou que o mutex bloqueia a goroutine readLoop. Apenas note que a goroutine que roda em segundo plano chama-se reapLoop (de reap, que significa colher/ceifar em inglês). Se criar um método chamado Get para ler dados, esse sim será executado por uma read loop (ou goroutine de leitura) e será temporariamente travado se coincidir com o momento exato da limpeza.
+Faz sentido como o ticker e as goroutines trabalham em paralelo sem se Overlaparem? Quer avançar agora para a escrita do método Get para ver exatamente como ele vai interagir com este mutex quando tentar ler um dado?
+
+

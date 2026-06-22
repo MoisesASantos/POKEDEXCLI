@@ -1,0 +1,50 @@
+Não diretamente, mas ele depende de uma goroutine interna do próprio sistema do Go (Go runtime).
+Quando crias um time.NewTicker, o Go não cria uma goroutine visível no teu código. Em vez disso, ele adiciona um evento ao gestor de tempo central do Go (chamado timer heap ou timer multiplexer).
+Aqui está como funciona a divisão do trabalho:
+## 1. O Gestor do Sistema (Background)
+O runtime do Go tem goroutines nativas que controlam todos os cronómetros e relógios do programa.
+
+* Este gestor acorda periodicamente, olha para o relógio do computador e vê: "Ok, passaram 5 segundos, preciso de avisar a cache".
+* Ele envia uma mensagem para o canal ticker.C e volta a dormir. [1] 
+
+## 2. A Tua Goroutine (reapLoop)
+A tua goroutine está bloqueada na linha for range ticker.C. Ela não gasta processador enquanto espera. [2] 
+
+* Assim que a mensagem do gestor chega ao canal, a tua goroutine acorda, executa a limpeza, tranca o mutex e apaga os dados.
+
+------------------------------
+## Resumo Visual do Fluxo
+
+[Relógio do PC] ──(5s)──> [Gestor de Timers do Go]
+                                │
+                        (Envia sinal para ticker.C)
+                                ▼
+                       [Canal ticker.C]
+                                │
+                        (Acorda a tua goroutine)
+                                ▼
+                    [reapLoop (Tua Goroutine)]
+                         tranca o mutex 🔒
+                         apaga itens velhos 🗑️
+                         destranca o mutex 🔓
+
+Se o teu método de limpeza demorar muito tempo (ex: 1 milissegundo), o Gestor do Go continua a contar o tempo normalmente em segundo plano. Ele não fica bloqueado pelo teu mutex, porque ele apenas mete a mensagem no canal e segue a sua vida.
+Ficou claro como o Go gere o tempo de forma independente da tua lógica? Queres aproveitar para escrever o método Get e fechar o ciclo básico da tua cache?
+
+[1] [https://dev.to](https://dev.to/igormelo/golang-desmistificando-channels-4n7h)
+[2] [https://ttemporin.dev](https://ttemporin.dev/detectando-goroutine-leaks-no-go-1-26/)
+
+
+Sim, exatamente. O ticker utiliza um canal do Go (chan time.Time) para fazer a ponte entre as rotinas internas do sistema e a tua goroutine.
+Quando fazes ticker := time.NewTicker(5 * time.Second), o Go cria um objeto que contém um canal público chamado C.
+## Como funciona essa comunicação:
+
+   1. A Rotina Interna do Go (Emissor): O gestor de tempo do runtime monitoriza o relógio do sistema. Quando passam os 5 segundos, essa rotina interna escreve a hora atual diretamente para dentro do canal ticker.C.
+   2. O Canal (ticker.C): Funciona como uma passadeira ou uma fila de espera. Ele recebe o dado enviado pelo sistema e guarda-o até que alguém o tire de lá.
+   3. A Tua Goroutine (Recetor): A tua instrução for range ticker.C (ou <-ticker.C) fica à escuta desse canal. Ela está bloqueada (suspensa) até que a rotina interna deposite lá a informação. Assim que o dado entra, a tua goroutine retira-o do canal e avança para executar o reapLoop.
+
+## O detalhe técnico importante:
+Este canal (ticker.C) tem um buffer de tamanho 1. Isto significa que se a tua goroutine de limpeza estiver muito lenta ou bloqueada pelo mutex, e o tempo do próximo tique chegar, a rotina interna do Go tenta enviar o sinal, vê que o canal está cheio e simplesmente descarta esse tique. O sistema não fica bloqueado à espera da tua cache; ele continua a correr independentemente.
+Ficou claro como este canal C serve de linha de comunicação direta entre o sistema do Go e o teu código? Queres que escreva o método Get para vermos como ele lê os dados do mapa em segurança?
+
+
