@@ -1,0 +1,3 @@
+Se usar curl url | jq 
+
+Vai retornar a resposta toda estruturada em json para melhor leitura

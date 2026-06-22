@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func commandHelp(cfg *Config) error {
+func commandHelp(cfg *Config, _ string) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
 	fmt.Println("help: Displays a help message")
@@ -15,13 +15,15 @@ func commandHelp(cfg *Config) error {
 	return nil
 }
 
-func commandExit(cfg *Config) error {
+func commandExit(cfg *Config, _ string) error {
+	
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandMap(cfg *Config) error {
+func commandMap(cfg *Config, _ string) error {
+
 	if cfg.NextURL != nil {
 		return MakeRequest(*cfg.NextURL, cfg)
 	}
@@ -32,13 +34,25 @@ func commandMap(cfg *Config) error {
 	)
 }
 
-func commandMapb(cfg *Config) error {
+func commandMapb(cfg *Config, _ string) error {
+
 	if cfg.PreviousURL == nil {
 		fmt.Println("You're on the first page")
 		return nil
 	}
 
 	return MakeRequest(*cfg.PreviousURL, cfg)
+}
+
+func commandExplore(cfg *Config, arg string) error {
+	
+	if arg == "" {
+		return fmt.Errorf("you must provide a location area")
+	}
+
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s", arg)
+	fmt.Printf("Exploring %s...\nFound Pokemon:\n", arg)
+	return MakeRequestLocation(cfg, url)
 }
 
 func GetCommands() map[string]CliCommand {
@@ -62,6 +76,11 @@ func GetCommands() map[string]CliCommand {
 			Name:        "mapb",
 			Description: "Display the previous 20 location areas",
 			Callback:    commandMapb,
+		},
+		"explore": {
+			Name:        "explore",
+			Description: "Display the name off all pokemon found on especific paramerater",
+			Callback:    commandExplore,
 		},
 	}
 }

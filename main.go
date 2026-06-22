@@ -37,13 +37,18 @@ func main() {
 			continue
 		}
 
+		var arg string
+		if len(resultList) > 1 {
+			arg = resultList[1]
+		}
+
 		command, exists := commands[resultList[0]]
 		if !exists {
 			fmt.Println("Unknown command")
 			continue
 		}
 
-		if err := command.Callback(cfg); err != nil {
+		if err := command.Callback(cfg, arg); err != nil {
 			fmt.Println(err)
 		}
 	}
