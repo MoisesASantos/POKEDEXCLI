@@ -1,5 +1,11 @@
 package pokecache
 
+import (
+	"testing"
+	"fmt"
+	"time"
+)
+
 func TestAddGet(t *testing.T) {
 	const interval = 5 * time.Second
 	cases := []struct {

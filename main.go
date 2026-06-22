@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 	"time"
-	"pokecache"
 	"github.com/MoisesASantos/POKEDEXCLI/repl"
+	"github.com/MoisesASantos/POKEDEXCLI/pokecache"
 )
 
 type LocationArea struct {
@@ -31,6 +31,9 @@ type cliCommand struct {
 	callback    func(*config) error
 }
 
+var CacheStorage *cache
+
+
 func commandHelp(cfg *config) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:\n")
@@ -48,6 +51,16 @@ func commandExit(cfg *config) error {
 }
 
 func makeRequest(url string, cfg *config) error {
+
+	if bytesGuardados, existe := CacheStorage.Get(url); existe {
+		err := json.Unmarshal(bytesGuardados, cfg)
+		if err != nil {
+			return err
+		}
+		imprimirResultados(cfg)
+		return nil
+	}
+
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
@@ -64,27 +77,33 @@ func makeRequest(url string, cfg *config) error {
 	defer res.Body.Close()
 
 	if res.StatusCode > 299 {
-		fmt.Printf("Error code: %d\n", res.StatusCode)
-		return nil
+		return fmt.Errorf("HTTP error code: %d", res.StatusCode)
 	}
+
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}
 
+	CacheStorage.Add(url, body)
 	err = json.Unmarshal(body, cfg)
 	if err != nil {
 		return err
 	}
 
-	for _, area := range cfg.Results {
-		fmt.Println(area.Name)
-	}
-
+	imprimirResultados(cfg)
 	return nil
 }
 
+func imprimirResultados(cfg *config) {
+	for _, area := range cfg.Results {
+		fmt.Println(area.Name)
+	}
+}
+
+
 func commandMap(cfg *config) error {
+	
 	if cfg.NextURL != nil {
 		return makeRequest(*cfg.NextURL, cfg)
 	}
@@ -104,9 +123,11 @@ func commandMapb(cfg *config) error {
 	return makeRequest(*cfg.PreviousURL, cfg)
 }
 
+
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
-
+	const baseTime = 5 * time.Millisecond
+	CacheStorage = NewCache(baseTime)
 	cfg := &config{}
 
 	commands := map[string]cliCommand{
