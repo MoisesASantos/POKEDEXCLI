@@ -17,10 +17,8 @@ func main() {
 
 	const baseTime = 300000 * time.Millisecond
 
-	cfg := &pokedex.Config{
-		CacheStorage: pokecache.NewCache(baseTime),
-	}
-
+	cache := pokecache.NewCache(baseTime)
+	cfg := pokedex.NewConfig(cache)
 	commands := pokedex.GetCommands()
 
 	for {

@@ -25,10 +25,10 @@ func commandExit(cfg *Config, _ string) error {
 func commandMap(cfg *Config, _ string) error {
 
 	if cfg.NextURL != nil {
-		return MakeRequest(*cfg.NextURL, cfg)
+		return MakeAreaRequest(*cfg.NextURL, cfg)
 	}
 
-	return MakeRequest(
+	return MakeAreaRequest(
 		"https://pokeapi.co/api/v2/location-area",
 		cfg,
 	)
@@ -41,7 +41,7 @@ func commandMapb(cfg *Config, _ string) error {
 		return nil
 	}
 
-	return MakeRequest(*cfg.PreviousURL, cfg)
+	return MakeAreaRequest(*cfg.PreviousURL, cfg)
 }
 
 func commandExplore(cfg *Config, arg string) error {
@@ -63,7 +63,38 @@ func commandCatch(cfg *Config, arg string) error {
 
 	fmt.Printf("Throwing a Pokeball at %s...\n", arg)
 	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", arg)
-	return MakeRequestPokemon(cfg, url)
+	return PokemonCatchRequest(cfg, url)
+}
+
+func printPokemonDetails(pokemon PokemonDetails) error {
+	fmt.Printf("Name: %s\n", pokemon.Name)
+	fmt.Printf("Height: %d\n", pokemon.Height)
+	fmt.Printf("Weight: %d\n", pokemon.Weight)
+
+	fmt.Println("Stats:")
+	for _, stat := range pokemon.Stats {
+		fmt.Printf(" - %s: %d\n", stat.Stat.Name, stat.BaseStat)
+	}
+
+	fmt.Println("Types:")
+	for _, t := range pokemon.Types {
+		fmt.Printf(" - %s\n", t.Type.Name)
+	}
+	return nil
+}
+
+func commandInspect(cfg *Config, arg string) error {
+
+	if arg == "" {
+		return fmt.Errorf("you must provide the pokemon name")
+	}
+
+	PokemonDetails, ok := cfg.MapPokemon[arg]
+	if !ok {
+		fmt.Println("you have not caught that pokemon")
+		return nil
+	}
+	return printPokemonDetails(PokemonDetails)
 }
 
 func GetCommands() map[string]CliCommand {
@@ -97,6 +128,11 @@ func GetCommands() map[string]CliCommand {
 			Name:        "catch",
 			Description: "This command is used to try to catch a pokemon",
 			Callback:    commandCatch,
+		},
+		"inspect": {
+			Name:        "inspect",
+			Description: "Show Details About the pokemon",
+			Callback:    commandInspect,
 		},
 	}
 }
