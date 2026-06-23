@@ -18,6 +18,11 @@ type LocationAreaResponse struct {
 	PokemonEncounters []PokemonEncounter `json:"pokemon_encounters"`
 }
 
+type PokemonDetails struct {
+	Name           string `json:"name"`
+	BaseExperience int    `json:"base_experience"`
+}
+
 type CliCommand struct {
 	Name        string
 	Description string

@@ -55,6 +55,17 @@ func commandExplore(cfg *Config, arg string) error {
 	return MakeRequestLocation(cfg, url)
 }
 
+func commandCatch(cfg *Config, arg string) error {
+
+	if arg == "" {
+		return fmt.Errorf("you must provide the pokemon name")
+	}
+
+	fmt.Printf("Throwing a Pokeball at %s...\n", arg)
+	ulr := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", arg)
+	return MakeRequestPokemon(cfg, url)
+}
+
 func GetCommands() map[string]CliCommand {
 	return map[string]CliCommand{
 		"help": {
@@ -81,6 +92,11 @@ func GetCommands() map[string]CliCommand {
 			Name:        "explore",
 			Description: "Display the name off all pokemon found on especific paramerater",
 			Callback:    commandExplore,
+		},
+		"catch": {
+			Name:        "catch",
+			Description: "This command is used to try to catch a pokemon",
+			Callback:    commandCatch,
 		},
 	}
 }

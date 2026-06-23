@@ -106,3 +106,55 @@ func MakeRequestLocation(cfg *Config, url string) error {
 	printPokemonResult(data)
 	return nil
 }
+
+func checkIfPokemonWasCaught(Pokemon PokemonDetails) {
+
+	chance := 100 - (Pokemon.BaseExperience / 4)
+	roll := rand.Intn(100)
+	if roll < chance {
+		fmt.Printf("%s escaped!\n", Pokemon.Name)
+	} else {
+		fmt.Printf("%s was caught!\n", Pokemon.Name)
+	}
+}
+
+func MakeRequestPokemon(cfg *Config, url string)
+{
+	bytesSaved, ok := cfg.CacheStorage.Get(url)
+	var Pokemon PokemonDetails 
+
+	if ok {
+		if err := json.Unmarshal(bytesSaved, &Pokemon); err != nil {
+			return err
+		}
+		checkIfPokemonWasCaught(Pokemon)
+		return nil
+	}
+
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+
+	body := io.ReadAll(res.Body)
+
+	cfg.CacheStorage.Add(url, body)
+
+	if err := json.Unmarshal(body, &Pokemon); err != nil {
+		return err
+	}
+
+	checkIfPokemonWasCaught(Pokemon)
+	return nil
+}
