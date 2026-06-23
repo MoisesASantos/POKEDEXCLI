@@ -62,7 +62,7 @@ func commandCatch(cfg *Config, arg string) error {
 	}
 
 	fmt.Printf("Throwing a Pokeball at %s...\n", arg)
-	ulr := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", arg)
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", arg)
 	return MakeRequestPokemon(cfg, url)
 }
 

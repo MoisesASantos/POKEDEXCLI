@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"time"
 )
@@ -111,6 +112,7 @@ func checkIfPokemonWasCaught(Pokemon PokemonDetails) {
 
 	chance := 100 - (Pokemon.BaseExperience / 4)
 	roll := rand.Intn(100)
+
 	if roll < chance {
 		fmt.Printf("%s escaped!\n", Pokemon.Name)
 	} else {
@@ -118,8 +120,7 @@ func checkIfPokemonWasCaught(Pokemon PokemonDetails) {
 	}
 }
 
-func MakeRequestPokemon(cfg *Config, url string)
-{
+func MakeRequestPokemon(cfg *Config, url string) error {
 	bytesSaved, ok := cfg.CacheStorage.Get(url)
 	var Pokemon PokemonDetails 
 
@@ -147,7 +148,10 @@ func MakeRequestPokemon(cfg *Config, url string)
 	defer res.Body.Close()
 
 
-	body := io.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
 
 	cfg.CacheStorage.Add(url, body)
 
